@@ -1,4 +1,4 @@
-import random
+import time
 
 
 class Photo:
@@ -39,9 +39,36 @@ def score(slide_1, slide_2):
     return min(result_1, result_2, result_3)
 
 
-data = []
+def similarity(first, second):
+    common_tags = []
+    all_tags = set(first.tags + second.tags)
+    for tag in all_tags:
+        if tag in first.tags and tag in second.tags:
+            common_tags.append(tag)
+    return len(common_tags)/len(all_tags) * 100  # similarity in percents
+
+
+def sort_verticals(data):
+    for j in range(25):
+        for i in range(len(data) - 2):
+            if similarity(data[i], data[i+1]) >= 10:
+                data[i+1], data[i+2] = data[i+2], data[i+1]
+    return data
+
+
+def sort_slides(data):
+    for j in range(15):
+        for i in range(len(data)-2):
+            if score(data[i], data[i+1]) < score(data[i], data[i+2]):
+                data[i+1], data[i+2] = data[i+2], data[i+1]
+    return data
+
+
 # Use 'a.txt', 'b.txt' and so on
-info = open("inputs/c.txt", "r")
+file_name = "c.txt"
+
+data = []
+info = open("inputs/" + file_name, "r")
 for line in info:
     data.append(line.replace("\n", ""))
 
@@ -62,27 +89,28 @@ for ph in ph_objects:
     else:
         verticals.append(ph)
 
-slides = [i for i in horizontals]
+start = float(time.time())
 
+verticals = sort_verticals(verticals)
+slides = [i for i in horizontals]
 for i in range(0, len(verticals), 2):
     slides.append(Slide(verticals[i], verticals[i+1]))
 
-random_results = []
+slides = sorted(slides, key=lambda x: len(x.tags))
+slides = sort_slides(slides)
 
-for j in range(1):
-    # random.shuffle(slides)
-    slides = sorted(slides, key=lambda x: len(x.tags))
+final_score = 0
 
-    final_score = 0
+for i in range(len(slides)-1):
+    final_score += score(slides[i], slides[i+1])
 
-    for i in range(len(slides)-1):
-        final_score += score(slides[i], slides[i+1])
+end = float(time.time())
 
-    random_results.append(final_score)
+print(round(end - start, 3), 'seconds')
+print(final_score)
+# BEST RESULT FOR d.txt == 273000
 
-print(max(random_results), min(random_results))
-
-# res_file = open("outputs/e.txt", "a+")
+# res_file = open("outputs/" + file_name, "a+")
 # res_file.write(str(len(slides)) + "\n")
 # for i in slides:
 #     res_file.write(str(i.id) + "\n")
